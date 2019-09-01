@@ -35,6 +35,13 @@ def get_spark_commits(date_str):
     # You need to decode it first, because Python doesn't know what the bytes represent.
     jsonData = json.loads(sourceJASON.decode('utf-8'))
 
+    from pyspark import SparkContext
+    # Create Spark Context Directly by passing the config parameters
+    sc = SparkContext("local[*]", "PySpark Electronic Arts Test")
+
+    # from pyspark import SparkSession
+    from pyspark.sql import SparkSession
+    spark = SparkSession(sc)
     # Create a Spark DataFrame from a Pandas DataFrame using Arrow
     # Pandas DataFrame is not distributed it exists on Driver node only
     # Inorder to acheive parallisam we need to distribute the data across the cluster
@@ -59,7 +66,7 @@ def get_spark_commits(date_str):
     # Save this DataFrame in memory as it will be used multiple times in the future
     jsonDF.cache()
     jsonDF.printSchema
-    display(jsonDF)
+    jsonDF.show()
 
     # Set Parameters for PostgreSQL Database Connection
     url_connect = "jdbc:postgresql://pa1postgreserver.postgres.database.azure.com:5432/postgres?"
@@ -126,7 +133,6 @@ def get_spark_commits(date_str):
                                    , readAuthorTableDF.creation_date)
     commitDF.show()
     commitDF.write.jdbc(url=url_connect, table=commitTable, mode="append", properties=db_properties)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Get the spark commits at a given date")
